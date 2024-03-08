@@ -253,6 +253,8 @@ pub enum SocketMessage {
 
     /// Update the Alacritty configuration.
     Config(IpcConfig),
+
+    ToggleShow
 }
 
 /// Migrate the configuration file.

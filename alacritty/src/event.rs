@@ -6,6 +6,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::error::Error;
 use std::ffi::OsStr;
 use std::fmt::Debug;
+use std::os::raw::c_void;
 #[cfg(not(windows))]
 use std::os::unix::io::RawFd;
 use std::path::PathBuf;
@@ -13,11 +14,14 @@ use std::rc::Rc;
 use std::time::{Duration, Instant};
 use std::{env, f32, mem};
 
+use cocoa::appkit::NSApplicationActivationPolicy;
+
+
 use ahash::RandomState;
 use crossfont::Size as FontSize;
 use glutin::display::{Display as GlutinDisplay, GetGlDisplay};
 use log::{debug, error, info, warn};
-use raw_window_handle::HasRawDisplayHandle;
+use raw_window_handle::{HasRawDisplayHandle, RawWindowHandle};
 use winit::event::{
     ElementState, Event as WinitEvent, Ime, Modifiers, MouseButton, StartCause,
     Touch as TouchEvent, WindowEvent,
@@ -93,6 +97,7 @@ impl From<Event> for WinitEvent<Event> {
 pub enum EventType {
     Terminal(TerminalEvent),
     ConfigReload(PathBuf),
+    ToggleShow,
     Message(Message),
     Scroll(Scroll),
     CreateWindow(WindowOptions),
@@ -1282,6 +1287,17 @@ impl input::Processor<EventProxy, ActionContext<'_, Notifier, EventProxy>> {
     pub fn handle_event(&mut self, event: WinitEvent<Event>) {
         match event {
             WinitEvent::UserEvent(Event { payload, .. }) => match payload {
+                EventType::ToggleShow => {
+                    println!("toggle show");
+                    if let Some(is_visible) = self.ctx.display.window.is_visible() {
+                        if is_visible {
+                            self.ctx.display.window.set_visible(false);
+                        } else {
+                            self.ctx.display.window.set_visible(true);
+                            self.ctx.display.window.focus_window();
+                        }
+                    }
+                },
                 EventType::SearchNext => self.ctx.goto_match(None),
                 EventType::Scroll(scroll) => self.ctx.scroll(scroll),
                 EventType::BlinkCursor => {

@@ -28,6 +28,10 @@ pub fn spawn_ipc_socket(options: &Options, event_proxy: EventLoopProxy<Event>) -
     });
     env::set_var(ALACRITTY_SOCKET_ENV, socket_path.as_os_str());
 
+    if let Err(e) = fs::write(socket_dir().join("alacritty_socket"), socket_path.to_str().unwrap_or_default()) {
+        warn!("Failed to write socket path to alacritty_socket file: {}", e);
+    }
+
     let listener = match UnixListener::bind(&socket_path) {
         Ok(listener) => listener,
         Err(err) => {
@@ -71,6 +75,10 @@ pub fn spawn_ipc_socket(options: &Options, event_proxy: EventLoopProxy<Event>) -
                     let event = Event::new(EventType::IpcConfig(ipc_config), window_id);
                     let _ = event_proxy.send_event(event);
                 },
+                SocketMessage::ToggleShow => {
+                    let event = Event::new(EventType::ToggleShow, None);
+                    let _ = event_proxy.send_event(event);
+                }
             }
         }
     });

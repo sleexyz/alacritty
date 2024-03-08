@@ -22,6 +22,7 @@ use log::info;
 #[cfg(windows)]
 use windows_sys::Win32::System::Console::{AttachConsole, FreeConsole, ATTACH_PARENT_PROCESS};
 use winit::event_loop::EventLoopBuilder as WinitEventLoopBuilder;
+use winit::platform::macos::{ActivationPolicy, EventLoopBuilderExtMacOS};
 #[cfg(all(feature = "x11", not(any(target_os = "macos", windows))))]
 use winit::platform::x11::EventLoopWindowTargetExtX11;
 
@@ -124,7 +125,9 @@ impl Drop for TemporaryFiles {
 /// config change monitor, and runs the main display loop.
 fn alacritty(mut options: Options) -> Result<(), Box<dyn Error>> {
     // Setup winit event loop.
-    let window_event_loop = WinitEventLoopBuilder::<Event>::with_user_event().build()?;
+    let window_event_loop = WinitEventLoopBuilder::<Event>::with_user_event()
+    .with_activation_policy(ActivationPolicy::Accessory)
+    .build()?;
 
     // Initialize the logger as soon as possible as to capture output from other subsystems.
     let log_file = logging::initialize(&options, window_event_loop.create_proxy())
